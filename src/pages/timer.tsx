@@ -29,7 +29,7 @@ const Timer = () => {
         }
         if (startTime){
             const endTime = new Date();
-            const sessionDuration = time;
+            const sessionDuration = Math.floor((endTime.getTime() - startTime.getTime()) / 100);
             setSessions((prev) => [
                 ...prev, { startTime,endTime,duration: sessionDuration,pauses: pauseCount,pausedTime},
                 ]);
@@ -37,7 +37,6 @@ const Timer = () => {
         }
         setPauseCount(0);
         setPausedTime(0);
-
     };
 
     const timerId =  useRef<NodeJS.Timeout | null>(null); //mutable value persistent across re-renders
@@ -79,16 +78,24 @@ const Timer = () => {
         const pad = (num: number) => num.toString().padStart(2,'0');
         return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
     }
+
+    const formatDuration = (durationInSecs: number) => {
+        const hours = Math.floor(durationInSecs/3600);
+        const minutes = Math.floor((durationInSecs % 3600)/60);
+        if(hours <= 0){
+            return `${minutes} min${minutes > 1 ? "s" : ""}`
+        }
+        else{
+            return `${hours} hr${hours > 1 ? "s" : ""} ${minutes} min${minutes !== 1 ? "s" : ""}`;
+        }
+    }
     return (
         <>
         <div style = {{ textAlign: 'center', marginTop: '50px'}}>
             <h1> Smart Productivity Timer</h1>
             <h2>{formatTime(time)} seconds</h2>
-            <button onClick={startTimer} disabled={isRunning}>
-                Start!
-            </button>
-            <button onClick={stopTimer} disabled={!isRunning}>
-                Stop!
+            <button onClick={isRunning ? stopTimer : startTimer}>
+                {isRunning ? "Pause" : "Start"}
             </button>
             <button onClick={resetTimer}>
                 Reset!
@@ -103,7 +110,7 @@ const Timer = () => {
                         {sessions.map((session, index) => (
                             <li key={index}>
                                 <p>Session {index + 1}:</p>
-                                <p>{session.startTime.toLocaleTimeString()} - {session.endTime?.toLocaleTimeString() || "Ongoing"} ({formatTime(session.duration)})</p>
+                                <p>{session.startTime.toLocaleTimeString()} - {session.endTime?.toLocaleTimeString() || "Ongoing"} ({formatDuration(session.duration)})</p>
                             </li>
                         ))}
                     </ul>
